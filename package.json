@@ -1,0 +1,17 @@
+{
+    "name": "@pgriess/picogrid",
+    "description": "Control system for a very small (e.g. home-sized) grid",
+    "license": "MIT",
+    "author": {
+        "name": "Peter Griess",
+        "email": "pg@std.in",
+        "url": "https://github.com/pgriess"
+    },
+    "bin": {
+        "pig": "src/cli.js"
+    },
+    "dependencies": {
+        "argparse": "^2.0.0",
+        "cross-fetch": "^3.1.0"
+    }
+}
