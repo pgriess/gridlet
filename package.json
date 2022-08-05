@@ -7,6 +7,7 @@
         "email": "pg@std.in",
         "url": "https://github.com/pgriess"
     },
+    "type": "module",
     "bin": {
         "pig": "src/cli.js"
     },
