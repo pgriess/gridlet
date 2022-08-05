@@ -2,14 +2,30 @@
 "use strict";
 
 import { ArgumentParser } from "argparse";
-import { login as enphase_login } from "./enphase.js"
+import { session_create } from "./enphase.js"
 
 const ap = ArgumentParser({
     "description": "The command line interface to Picogrid."
 });
+ap.add_argument(
+    "-u",
+    {
+        metavar: "<username>",
+        type: "str",
+        help: "Enphase username"
+    },
+)
+ap.add_argument(
+    "-p",
+    {
+        metavar: "<password>",
+        type: "str",
+        help: "Enphase password"
+    },
+)
 
 const args = ap.parse_args();
-
-console.log("Hello, world!");
-
-enphase_login()
+const session = await session_create(args.u, args.p)
+if (session) {
+    console.log("logged in!")
+}
