@@ -2,6 +2,7 @@
 "use strict";
 
 import { ArgumentParser } from "argparse";
+import { battery_info_get, session_create } from "./enphase.js"
 import { exit } from "node:process"
 
 const ap = ArgumentParser({
@@ -30,3 +31,6 @@ if (!session) {
     console.error("Failed to log in")
     exit(1)
 }
+
+const bi = await battery_info_get(session)
+console.log(bi)

@@ -19,7 +19,7 @@ import { DOMParser } from "@xmldom/xmldom"
 import formUrlEncoded from "form-urlencoded"
 
 const BASE_URL = "https://enlighten.enphaseenergy.com"
-const LOGIN_SUCCESS_LOC_RE = /^https:\/\/enlighten.enphaseenergy.com\/web\/[0-9]+\?v=.*$/
+const LOGIN_SUCCESS_LOC_RE = /^https:\/\/enlighten.enphaseenergy.com\/web\/(?<version>[0-9]+)\?v=.*$/
 
 // Turn an HTMLCollection into an ES6 iterator
 function* html_collection_iter(hc) {
@@ -113,4 +113,21 @@ async function session_create(username, password) {
     }
 }
 
-export { session_create }
+// Return battery information
+async function battery_info_get(session) {
+    const req = new Request(
+        `${BASE_URL}/pv/settings/${session.version}/battery_config?source=my_enlighten`,
+        {
+            headers: {
+                Cookie: Array
+                    .from(session.cookies)
+                    .map(([k, v]) => { return `${k}=${v}` })
+                    .join("; "),
+            },
+        },
+    )
+    const resp = await fetch(req)
+    return JSON.parse(await resp.text())
+}
+
+export { battery_info_get, session_create }
