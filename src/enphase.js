@@ -56,13 +56,10 @@ async function session_create(username, password) {
     // Unfortunately the non-Browser port of this doesn't support any nice query
     // selectors, so we walk the DOM by hand. We could use jsdom, but it's
     // really heavy. Just live with it.
-    //
-    // XXX: formUrlEncoded() requires that this be an Object so we can't use
-    //      the newer Map. Alas.
-    let formInputs = {
-        "user[email]": username,
-        "user[password]": password,
-    }
+    const formInputs = new Map([
+        ["user[email]", username],
+        ["user[password]", password],
+    ])
     const doc = (new DOMParser()).parseFromString(await bootstrapResp.text(), "text/html")
     for (const form of html_collection_iter(doc.getElementsByTagName("form"))) {
         if (form.getAttribute("action") !== "/login/login") {
@@ -75,7 +72,7 @@ async function session_create(username, password) {
                 continue
             }
 
-            formInputs[input.getAttribute("name")] = input.getAttribute("value")
+            formInputs.set(input.getAttribute("name"), input.getAttribute("value"))
         }
     }
 
@@ -90,7 +87,7 @@ async function session_create(username, password) {
                     .map(([k, v]) => { return `${k}=${v}` })
                     .join("; "),
             },
-            body: formUrlEncoded(formInputs),
+            body: formUrlEncoded(Object.fromEntries(formInputs)),
             redirect: "manual",
         }
     )
