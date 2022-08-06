@@ -28,25 +28,30 @@ function* html_collection_iter(hc) {
     }
 }
 
-// Create an authenticated session to the Enphase Enlighten system
-async function session_create(username, password) {
-    const bootstrapResp = await fetch(`${BASE_URL}/`)
+// Return a copy of the cookie map with cookies parsed from the given Response applied
+function cookie_map_update(resp, prev_cookies) {
+    const next_cookies = (prev_cookies) ? new Map(prev_cookies.entries()) : new Map()
 
-    // Collect cookies
-    //
     // The Enphase server can return multiple cookies, which the Fetch library
     // merges into a single ','-seprated header value. This is reasonable
     // behavior for headers that are ','-separated, which does NOT include
     // 'Set-Cookie'. See https://github.com/whatwg/fetch/issues/506. As a
     // workaround, use a special helper that knows how this header is special
     // and can split it correctly.
-    const cookies = new Map()
-    for (const cs of splitCookiesString(bootstrapResp.headers.get("set-cookie"))) {
+    for (const cs of splitCookiesString(resp.headers.get("set-cookie"))) {
         // This returns an array, but we know that it will only have one element
         // since we're feeding it the results of splitCookieString().
         const cookie = parseCookie(cs)[0]
-        cookies.set(cookie.name, cookie.value)
+        next_cookies.set(cookie.name, cookie.value)
     }
+
+    return next_cookies
+}
+
+// Create an authenticated session to the Enphase Enlighten system
+async function session_create(username, password) {
+    const bootstrapResp = await fetch(`${BASE_URL}/`)
+    const cookies = cookie_map_update(bootstrapResp)
 
     // Collect form elements
     //
@@ -89,7 +94,7 @@ async function session_create(username, password) {
             },
             body: formUrlEncoded(Object.fromEntries(formInputs)),
             redirect: "manual",
-        }
+        },
     )
 
     const loginResp = await fetch(loginReq)
@@ -97,11 +102,15 @@ async function session_create(username, password) {
         return null;
     }
 
-    if (!loginResp.headers.get("location").match(LOGIN_SUCCESS_LOC_RE)) {
+    const locMatch = loginResp.headers.get("location").match(LOGIN_SUCCESS_LOC_RE)
+    if (!locMatch) {
         return null;
     }
 
-    return {}
+    return {
+        cookies: cookie_map_update(loginResp, cookies),
+        version: locMatch.groups.version,
+    }
 }
 
 export { session_create }
