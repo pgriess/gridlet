@@ -2,7 +2,7 @@
 "use strict";
 
 import { ArgumentParser } from "argparse";
-import { createSession, getBatteryInfo } from "./enphase.js"
+import { createSession, getBatteryInfo, setBatteryInfo } from "./enphase.js"
 import { exit } from "node:process"
 
 const ap = ArgumentParser({
@@ -32,5 +32,5 @@ if (!session) {
     exit(1)
 }
 
-const bi = await getBatteryInfo(session)
-console.log(bi)
+// await setBatteryInfo(session, { usage: "backup_only", battery_backup_percentage: 100 })
+await setBatteryInfo(session, { usage: "self-consumption", battery_backup_percentage: 30 })

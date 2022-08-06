@@ -118,8 +118,40 @@ async function getBatteryInfo(session) {
             },
         },
     )
+
     const resp = await fetch(req)
     return JSON.parse(await resp.text())
 }
 
-export { getBatteryInfo, createSession }
+// Set battery information
+//
+// TODO: Option to block until the operation has been applied?
+async function setBatteryInfo(session, settings) {
+    const req = new Request(
+        `${BASE_URL}/pv/settings/${session.siteId}/battery_config?source=my_enlighten`,
+        {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                Cookie: Array
+                    .from(session.cookies)
+                    .map(([k, v]) => { return `${k}=${v}` })
+                    .join("; "),
+                "e-auth-token": session.cookies.get("_enlighten_4_session"),
+            },
+            body: formUrlEncoded(settings),
+        },
+    )
+
+    const resp = await fetch(req)
+    if (resp.status != 200) {
+        throw new Error(`Failed with status ${resp.status}: ${resp.statusText}`)
+    }
+
+    const respBody = JSON.parse(await resp.text())
+    if (respBody.message !== "Battery config updated successfully") {
+        throw new Error(`Failed with message ${respBody.message}`)
+    }
+}
+
+export { getBatteryInfo, setBatteryInfo, createSession }
