@@ -11,15 +11,18 @@ const BASE_URL = "https://enlighten.enphaseenergy.com"
 const LOGIN_SUCCESS_LOC_RE = /^https:\/\/enlighten.enphaseenergy.com\/web\/(?<siteId>[0-9]+)\?v=.*$/
 
 // Turn an HTMLCollection into an ES6 iterator
-function* html_collection_iter(hc) {
+function* htmlCollectionIter(hc) {
     for (let i = 0; i < hc.length; ++i) {
         yield hc.item(i)
     }
 }
 
-// Return a copy of the cookie map with cookies parsed from the given Response applied
-function cookie_map_update(resp, prev_cookies) {
-    const next_cookies = (prev_cookies) ? new Map(prev_cookies.entries()) : new Map()
+// Parse cookies from a Response and return them in a Map.
+//
+// If provided, a map of previous cookies will be used to initialize the
+// to-be-returned Map.
+function responseCookies(resp, prevCookies) {
+    const nextCookies = (prevCookies) ? new Map(prevCookies.entries()) : new Map()
 
     // The Enphase server can return multiple cookies, which the Fetch library
     // merges into a single ','-seprated header value. This is reasonable
@@ -31,16 +34,16 @@ function cookie_map_update(resp, prev_cookies) {
         // This returns an array, but we know that it will only have one element
         // since we're feeding it the results of splitCookieString().
         const cookie = parseCookie(cs)[0]
-        next_cookies.set(cookie.name, cookie.value)
+        nextCookies.set(cookie.name, cookie.value)
     }
 
-    return next_cookies
+    return nextCookies
 }
 
 // Create an authenticated session to the Enphase Enlighten system
-async function session_create(username, password) {
+async function createSession(username, password) {
     const bootstrapResp = await fetch(`${BASE_URL}/`)
-    const cookies = cookie_map_update(bootstrapResp)
+    const cookies = responseCookies(bootstrapResp)
 
     // Collect form elements
     //
@@ -55,12 +58,12 @@ async function session_create(username, password) {
         ["user[password]", password],
     ])
     const doc = (new DOMParser()).parseFromString(await bootstrapResp.text(), "text/html")
-    for (const form of html_collection_iter(doc.getElementsByTagName("form"))) {
+    for (const form of htmlCollectionIter(doc.getElementsByTagName("form"))) {
         if (form.getAttribute("action") !== "/login/login") {
             continue
         }
 
-        for (const input of html_collection_iter(form.getElementsByTagName("input"))) {
+        for (const input of htmlCollectionIter(form.getElementsByTagName("input"))) {
             const inputType = input.getAttribute("type")
             if (inputType !== "hidden" && inputType !== "submit") {
                 continue
@@ -97,13 +100,13 @@ async function session_create(username, password) {
     }
 
     return {
-        cookies: cookie_map_update(loginResp, cookies),
+        cookies: responseCookies(loginResp, cookies),
         siteId: locMatch.groups.siteId,
     }
 }
 
 // Return battery information
-async function battery_info_get(session) {
+async function getBatteryInfo(session) {
     const req = new Request(
         `${BASE_URL}/pv/settings/${session.siteId}/battery_config?source=my_enlighten`,
         {
@@ -119,4 +122,4 @@ async function battery_info_get(session) {
     return JSON.parse(await resp.text())
 }
 
-export { battery_info_get, session_create }
+export { getBatteryInfo, createSession }
