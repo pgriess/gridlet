@@ -1,7 +1,8 @@
 {
     "name": "@pgriess/picogrid",
     "description": "Control system for a very small (e.g. home-sized) grid",
-    "license": "MIT",
+    "license": "UNLICENSED",
+    "private": true,
     "author": {
         "name": "Peter Griess",
         "email": "pg@std.in",
