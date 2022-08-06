@@ -1,15 +1,4 @@
 // Interact with Enphase devices.
-//
-// For debugging you can run through Charles as follows
-//
-// 1. Set up Charles in Reverse Proxy mode (Proxy -> Reverse Proxies) and add a
-//    mapping to enlighten.enphaseenergy.com:443.
-//
-// 2. Override ENPHASE_BASE_URL to the Charles URL, e.g.
-//    https://localhost:54532
-//
-// 3. Run with the NODE_TLS_REJECT_UNAUTHORIZED=0 environment variable set,
-//    which will disable TLS validation
 
 "use strict";
 
