@@ -8,7 +8,7 @@ import { DOMParser } from "@xmldom/xmldom"
 import formUrlEncoded from "form-urlencoded"
 
 const BASE_URL = "https://enlighten.enphaseenergy.com"
-const LOGIN_SUCCESS_LOC_RE = /^https:\/\/enlighten.enphaseenergy.com\/web\/(?<version>[0-9]+)\?v=.*$/
+const LOGIN_SUCCESS_LOC_RE = /^https:\/\/enlighten.enphaseenergy.com\/web\/(?<siteId>[0-9]+)\?v=.*$/
 
 // Turn an HTMLCollection into an ES6 iterator
 function* html_collection_iter(hc) {
@@ -98,14 +98,14 @@ async function session_create(username, password) {
 
     return {
         cookies: cookie_map_update(loginResp, cookies),
-        version: locMatch.groups.version,
+        siteId: locMatch.groups.siteId,
     }
 }
 
 // Return battery information
 async function battery_info_get(session) {
     const req = new Request(
-        `${BASE_URL}/pv/settings/${session.version}/battery_config?source=my_enlighten`,
+        `${BASE_URL}/pv/settings/${session.siteId}/battery_config?source=my_enlighten`,
         {
             headers: {
                 Cookie: Array
