@@ -1,5 +1,5 @@
 {
-    "name": "@pgriess/picogrid",
+    "name": "@pgriess/gridlet",
     "description": "Control system for a very small (e.g. home-sized) grid",
     "license": "UNLICENSED",
     "private": true,
@@ -7,6 +7,10 @@
         "name": "Peter Griess",
         "email": "pg@std.in",
         "url": "https://github.com/pgriess"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/pgriess/gridlet.git"
     },
     "type": "module",
     "bin": {
