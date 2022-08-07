@@ -14,7 +14,7 @@
     },
     "type": "module",
     "bin": {
-        "pig": "src/cli.js"
+        "gridlet": "src/cli.js"
     },
     "dependencies": {
         "@xmldom/xmldom": "^0.8.2",
