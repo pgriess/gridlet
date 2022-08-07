@@ -1,5 +1,9 @@
 Control system for a very small (e.g. home-sized) grid.
 
+# Design
+
+This is implemented in JavaScript by APIs that have browser-native equivalents (e.g. we use a polyfill to provide `DOMParser` to Node). The idea is that it should be possible to run this as a PWA. Does this actually matter? Probably not, but it's a fun thought experiment.
+
 # Installing
 
 Install [direnv](https://direnv.net/).
@@ -39,7 +43,6 @@ optional arguments:
 ```
 
 ## Debugging with Charles
-
 
 Set up Charles in Reverse Proxy mode (Proxy -> Reverse Proxies) and add a mapping to `enlighten.enphaseenergy.com:443`.
 
