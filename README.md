@@ -31,8 +31,8 @@ npm link .
 # Running
 
 ```
-pig --help
-usage: pig [-h] [-u <username>] [-p <password>]
+gridlet --help
+usage: gridlet [-h] [-u <username>] [-p <password>]
 
 The command line interface to Picogrid.
 
