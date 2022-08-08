@@ -21,6 +21,7 @@
         "argparse": "^2.0.0",
         "cross-fetch": "^3.1.0",
         "form-urlencoded": "^6.1.0",
+        "loglevel": "^1.8.0",
         "set-cookie-parser": "^2.5.1"
     }
 }
