@@ -1,3 +1,7 @@
+"use strict";
+
+import { Duration } from "luxon"
+
 // States that we can put the system in
 //
 // NOTE: Enum pattern from here https://stackoverflow.com/a/44447975
@@ -7,8 +11,12 @@ const State = Object.freeze({
 })
 
 // Compute the next state
-function nextState(currentDate) {
-    if (currentDate.getHours() < 6 || currentDate.getHours() > 20) {
+function nextState(now) {
+    const slop = Duration.fromObject({ minutes: 10 })
+    const beginDT = now.set({ "hour": 6, "minute": 0, "second": 0, "millisecond": 0 }).minus(slop)
+    const endDT = now.set({ "hour": 20, "minute": 0, "second": 0, "millisecond": 0 }).plus(slop)
+
+    if (now < beginDT || now > endDT) {
         return State.CHARGE_BATTERY_FROM_GRID
     }
 

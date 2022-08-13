@@ -5,6 +5,7 @@ import { exit } from "node:process"
 import { inspect } from "node:util"
 import { ArgumentParser } from "argparse"
 import log from "loglevel" // CommonJS, not ES6 module
+import { DateTime } from "luxon"
 import { createSession, getBatteryInfo, setBatteryInfo } from "./enphase.js"
 import { nextState, State, stateFromBatteryInfo } from "./state.js"
 
@@ -66,7 +67,7 @@ if (!session) {
 const bi = await getBatteryInfo(session)
 log.debug(`battery_info=${inspect(bi)}`)
 const cs = stateFromBatteryInfo(bi)
-const ns = nextState(new Date())
+const ns = nextState(DateTime.now())
 
 if (ns === cs) {
     log.info("Current state un-changed; doing nothing")
