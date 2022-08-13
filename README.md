@@ -49,3 +49,9 @@ Set up Charles in Reverse Proxy mode (Proxy -> Reverse Proxies) and add a mappin
 Override `ENPHASE_BASE_URL` in `enphase.js` to the Charles URL, e.g. https://localhost:54532
 
 Run with the `NODE_TLS_REJECT_UNAUTHORIZED=0` environment variable set, which will disable TLS validation
+
+# Testing
+
+## Unit tests
+
+Unit tests can be run using `npm test`.
