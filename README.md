@@ -55,3 +55,5 @@ Run with the `NODE_TLS_REJECT_UNAUTHORIZED=0` environment variable set, which wi
 ## Unit tests
 
 Unit tests can be run using `npm test`.
+
+Tests can also be run (and debugged!) from VS Code using the "Mocha tests" launch target.
