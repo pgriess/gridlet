@@ -13,14 +13,18 @@ const State = Object.freeze({
 // Compute the next state
 function nextState(now) {
     const slop = Duration.fromObject({ minutes: 10 })
-    const beginDT = now.set({ "hour": 6, "minute": 0, "second": 0, "millisecond": 0 }).minus(slop)
-    const endDT = now.set({ "hour": 20, "minute": 0, "second": 0, "millisecond": 0 }).plus(slop)
+    const beginSelfDT = now
+        .set({ "hour": 6, "minute": 0, "second": 0, "millisecond": 0 })
+        .minus(slop)
+    const endSelfDT = now
+        .set({ "hour": 20, "minute": 0, "second": 0, "millisecond": 0 })
+        .minus(slop)
 
-    if (now < beginDT || now > endDT) {
-        return State.CHARGE_BATTERY_FROM_GRID
+    if (beginSelfDT < now && now < endSelfDT) {
+        return State.SELF_POWER
     }
 
-    return State.SELF_POWER
+    return State.CHARGE_BATTERY_FROM_GRID
 }
 
 // Compute the current state from battery info

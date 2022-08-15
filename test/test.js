@@ -19,27 +19,26 @@ describe("state", () => {
                 nextState(DateTime.fromISO("2022-01-01T22:00:00")),
                 State.CHARGE_BATTERY_FROM_GRID)
         })
-        it("should handle slop", () => {
+        it("should handle running at the exact expected time", () => {
             assert.equal(
-                nextState(DateTime.fromISO("2022-01-01T06:01:00")),
+                nextState(DateTime.fromISO("2022-01-01T06:00:00")),
                 State.SELF_POWER)
+            assert.equal(
+                nextState(DateTime.fromISO("2022-01-01T20:00:00")),
+                State.CHARGE_BATTERY_FROM_GRID)
+        })
+        it("should handle slop", () => {
             assert.equal(
                 nextState(DateTime.fromISO("2022-01-01T05:55:00")),
                 State.SELF_POWER)
             assert.equal(
-                nextState(DateTime.fromISO("2022-01-01T05:45:00")),
-                State.CHARGE_BATTERY_FROM_GRID)
-            assert.equal(
-                nextState(DateTime.fromISO("2022-01-01T19:45:00")),
+                nextState(DateTime.fromISO("2022-01-01T06:05:00")),
                 State.SELF_POWER)
             assert.equal(
                 nextState(DateTime.fromISO("2022-01-01T19:55:00")),
-                State.SELF_POWER)
+                State.CHARGE_BATTERY_FROM_GRID)
             assert.equal(
                 nextState(DateTime.fromISO("2022-01-01T20:05:00")),
-                State.SELF_POWER)
-            assert.equal(
-                nextState(DateTime.fromISO("2022-01-01T20:15:00")),
                 State.CHARGE_BATTERY_FROM_GRID)
         })
     })
