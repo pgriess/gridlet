@@ -34,7 +34,7 @@ npm link .
 gridlet --help
 usage: gridlet [-h] [-u <username>] [-p <password>]
 
-The command line interface to Picogrid.
+The command line interface to Gridlet.
 
 optional arguments:
   -h, --help     show this help message and exit

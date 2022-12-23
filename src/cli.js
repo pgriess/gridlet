@@ -10,7 +10,7 @@ import { createSession, getBatteryInfo, setBatteryInfo } from "./enphase.js"
 import { nextState, State, stateFromBatteryInfo } from "./state.js"
 
 const ap = ArgumentParser({
-    "description": "The command line interface to Picogrid."
+    "description": "The command line interface to Gridlet."
 });
 ap.add_argument(
     "-p",
