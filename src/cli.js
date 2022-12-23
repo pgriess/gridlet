@@ -13,12 +13,21 @@ const ap = ArgumentParser({
     "description": "The command line interface to Gridlet."
 });
 ap.add_argument(
+    "-n",
+    {
+        dest: "dry_run",
+        default: false,
+        action: "store_true",
+        help: "dry-run only; do not take any action",
+    }
+)
+ap.add_argument(
     "-p",
     {
         dest: "password",
         metavar: "<password>",
         type: "str",
-        help: "Enphase password"
+        help: "password for Enphase service"
     },
 )
 ap.add_argument(
@@ -36,7 +45,7 @@ ap.add_argument(
         dest: "username",
         metavar: "<username>",
         type: "str",
-        help: "Enphase username"
+        help: "username for Enphase service"
     },
 )
 ap.add_argument(
@@ -69,21 +78,25 @@ log.debug(`battery_info=${inspect(bi)}`)
 const cs = stateFromBatteryInfo(bi)
 const ns = nextState(DateTime.now())
 
+log.info(`Transitioning state from ${cs.toString()} to ${ns.toString()}`)
+
 if (ns === cs) {
     log.info("Current state un-changed; doing nothing")
     exit(0)
 }
 
-// TODO: Fix formatting
-const nbi =
-    (ns === State.CHARGE_BATTERY_FROM_GRID) ? { usage: "backup_only", battery_backup_percentage: 100 } :
-        (ns === State.SELF_POWER) ? { usage: "self-consumption", battery_backup_percentage: 30 } :
-            undefined
+if (!args.dry_run) {
+    // TODO: Fix formatting
+    const nbi =
+        (ns === State.CHARGE_BATTERY_FROM_GRID) ? { usage: "backup_only", battery_backup_percentage: 100 } :
+            (ns === State.SELF_POWER) ? { usage: "self-consumption", battery_backup_percentage: 30 } :
+                undefined
 
-if (nbi === undefined) {
-    throw new Error(`Unexpected state: ${ns}`)
+    if (nbi === undefined) {
+        throw new Error(`Unexpected state: ${ns}`)
+    }
+
+    log.info(`Setting battery info to ${nbi}`)
+
+    await setBatteryInfo(session, nbi)
 }
-
-log.info(`Changing current state to ${ns.toString()}`)
-
-await setBatteryInfo(session, nbi)
