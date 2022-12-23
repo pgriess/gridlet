@@ -3,6 +3,7 @@
 
 import { exit } from "node:process"
 import { inspect } from "node:util"
+import { AbortController } from "abort-controller"
 import { ArgumentParser } from "argparse"
 import log from "loglevel" // CommonJS, not ES6 module
 import { DateTime } from "luxon"
@@ -40,6 +41,16 @@ ap.add_argument(
     }
 )
 ap.add_argument(
+    "-t",
+    {
+        dest: "timeout",
+        metavar: "<milliseconds>",
+        type: "int",
+        default: 60000,
+        help: "set global timeout for entire operation",
+    }
+)
+ap.add_argument(
     "-u",
     {
         dest: "username",
@@ -67,13 +78,24 @@ log.setDefaultLevel(
         Math.max(log.levels.TRACE, log.levels.ERROR - args.verbosity)
 )
 
-const session = await createSession(args.username, args.password)
+// Configure a global timeout
+//
+// TODO: Is there a better way to clean this stuff up? Tracking the ID and
+//       remembering to call clearTimeout() in all exit paths is error-prone.
+const abortController = new AbortController()
+const abortTimeoutID = setTimeout(() => {
+    log.error("Global timeout expired; aborting")
+    abortController.abort()
+}, args.timeout)
+
+const session = await createSession(args.username, args.password, abortController.signal)
 if (!session) {
     log.error("Failed to log in!")
+    clearTimeout(abortTimeoutID)
     exit(1)
 }
 
-const bi = await getBatteryInfo(session)
+const bi = await getBatteryInfo(session, abortController.signal)
 log.debug(`battery_info=${inspect(bi)}`)
 const cs = stateFromBatteryInfo(bi)
 const ns = nextState(DateTime.now())
@@ -82,6 +104,7 @@ log.info(`Transitioning state from ${cs.toString()} to ${ns.toString()}`)
 
 if (ns === cs) {
     log.info("Current state un-changed; doing nothing")
+    clearTimeout(abortTimeoutID)
     exit(0)
 }
 
@@ -98,5 +121,7 @@ if (!args.dry_run) {
 
     log.info(`Setting battery info to ${nbi}`)
 
-    await setBatteryInfo(session, nbi)
+    await setBatteryInfo(session, nbi, abortController.signal)
 }
+
+clearTimeout(abortTimeoutID)

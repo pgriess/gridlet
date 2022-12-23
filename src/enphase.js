@@ -41,8 +41,8 @@ function responseCookies(resp, prevCookies) {
 }
 
 // Create an authenticated session to the Enphase Enlighten system
-async function createSession(username, password) {
-    const bootstrapResp = await fetch(`${BASE_URL}/`)
+async function createSession(username, password, signal) {
+    const bootstrapResp = await fetch(`${BASE_URL}/`, { signal })
     const cookies = responseCookies(bootstrapResp)
 
     // Collect form elements
@@ -89,7 +89,7 @@ async function createSession(username, password) {
         },
     )
 
-    const loginResp = await fetch(loginReq)
+    const loginResp = await fetch(loginReq, { signal })
     if (loginResp.status !== 302) {
         return null;
     }
@@ -106,7 +106,7 @@ async function createSession(username, password) {
 }
 
 // Return battery information
-async function getBatteryInfo(session) {
+async function getBatteryInfo(session, signal) {
     const req = new Request(
         `${BASE_URL}/pv/settings/${session.siteId}/battery_config?source=my_enlighten`,
         {
@@ -119,14 +119,14 @@ async function getBatteryInfo(session) {
         },
     )
 
-    const resp = await fetch(req)
+    const resp = await fetch(req, { signal })
     return JSON.parse(await resp.text())
 }
 
 // Set battery information
 //
 // TODO: Option to block until the operation has been applied?
-async function setBatteryInfo(session, settings) {
+async function setBatteryInfo(session, settings, signal) {
     const req = new Request(
         `${BASE_URL}/pv/settings/${session.siteId}/battery_config?source=my_enlighten`,
         {
@@ -143,7 +143,7 @@ async function setBatteryInfo(session, settings) {
         },
     )
 
-    const resp = await fetch(req)
+    const resp = await fetch(req, { signal })
     if (resp.status != 200) {
         throw new Error(`Failed with status ${resp.status}: ${resp.statusText}`)
     }
