@@ -136,8 +136,7 @@ if (!args.dry_run) {
         throw new Error(`Unexpected state: ${ns}`)
     }
 
-    log.info(`Setting battery info to ${nbi}`)
-
+    log.info(`Setting battery info to ${inspect(nbi)}`)
     await setBatteryInfo(session, nbi, abortController.signal)
 }
 
