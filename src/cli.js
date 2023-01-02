@@ -132,6 +132,7 @@ if (!args.dry_run) {
             (ns === State.SELF_POWER) ? { usage: "self-consumption", battery_backup_percentage: 30 } :
                 undefined
 
+    // TODO: Clear timeout
     if (nbi === undefined) {
         throw new Error(`Unexpected state: ${ns}`)
     }
