@@ -11,7 +11,4 @@ RUN npm ci .
 RUN test -n "${ENPHASE_USERNAME}" && echo "${ENPHASE_USERNAME}" >.enphase_username.txt
 RUN test -n "${ENPHASE_PASSWORD}" && echo "${ENPHASE_PASSWORD}" >.enphase_password.txt
 
-ENV GRIDLET_DRY_RUN true
-ENV GRIDLET_LOG_LEVEL 0
-
 CMD ["lambda.handler"]
