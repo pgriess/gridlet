@@ -29,9 +29,11 @@ const State = Object.freeze({
 function nextState(now) {
     const slop = Duration.fromObject({ minutes: 10 })
     const beginSelfDT = now
+        .setZone("America/Chicago")
         .set({ "hour": 6, "minute": 0, "second": 0, "millisecond": 0 })
         .minus(slop)
     const endSelfDT = now
+        .setZone("America/Chicago")
         .set({ "hour": 20, "minute": 0, "second": 0, "millisecond": 0 })
         .minus(slop)
 
