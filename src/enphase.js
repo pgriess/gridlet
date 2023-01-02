@@ -15,8 +15,11 @@
 // Interact with Enphase devices.
 "use strict";
 
+import { inspect } from "node:util"
+import { AbortController } from "abort-controller"
 import { parse as parseCookie, splitCookiesString } from "set-cookie-parser"
 import { fetch, Request } from "cross-fetch"
+import log from "loglevel" // CommonJS, not ES6 module
 import { DOMParser } from "@xmldom/xmldom"
 import formUrlEncoded from "form-urlencoded"
 
@@ -53,9 +56,40 @@ function responseCookies(resp, prevCookies) {
     return nextCookies
 }
 
+// Execute a `fetch()` request with some options
+async function fetchRequest(req, options) {
+    const defaultOptions = {
+        signal: null,
+        timeoutMs: 10000,
+    }
+
+    const finalOptions = Object.assign({}, defaultOptions, options || {})
+
+    let abortTimeoutID = null;
+    let fetchOptions = {}
+    if (finalOptions.signal !== null) {
+        fetchOptions.signal = finalOptions.signal
+    } else if (finalOptions.timeoutMs !== null) {
+        const abortController = new AbortController()
+        fetchOptions.signal = abortController.signal
+        abortTimeoutID = setTimeout(() => {
+            log.error(`Request timeout expired; aborting ${inspect(req)}`)
+            abortController.abort()
+        }, finalOptions.timeoutMs)
+    }
+
+    try {
+        return await fetch(req, fetchOptions)
+    } finally {
+        if (abortTimeoutID) {
+            clearTimeout(abortTimeoutID)
+        }
+    }
+}
+
 // Create an authenticated session to the Enphase Enlighten system
-async function createSession(username, password, signal) {
-    const bootstrapResp = await fetch(`${BASE_URL}/`, { signal })
+async function createSession(username, password, options) {
+    const bootstrapResp = await fetchRequest(`${BASE_URL}/`, options)
     const cookies = responseCookies(bootstrapResp)
 
     // Collect form elements
@@ -102,7 +136,7 @@ async function createSession(username, password, signal) {
         },
     )
 
-    const loginResp = await fetch(loginReq, { signal })
+    const loginResp = await fetchRequest(loginReq, options)
     if (loginResp.status !== 302) {
         return null;
     }
@@ -119,7 +153,7 @@ async function createSession(username, password, signal) {
 }
 
 // Return battery information
-async function getBatteryInfo(session, signal) {
+async function getBatteryInfo(session, options) {
     const req = new Request(
         `${BASE_URL}/pv/settings/${session.siteId}/battery_config?source=my_enlighten`,
         {
@@ -132,14 +166,14 @@ async function getBatteryInfo(session, signal) {
         },
     )
 
-    const resp = await fetch(req, { signal })
+    const resp = await fetchRequest(req, options)
     return JSON.parse(await resp.text())
 }
 
 // Set battery information
 //
 // TODO: Option to block until the operation has been applied?
-async function setBatteryInfo(session, settings, signal) {
+async function setBatteryInfo(session, settings, options) {
     const req = new Request(
         `${BASE_URL}/pv/settings/${session.siteId}/battery_config?source=my_enlighten`,
         {
@@ -156,7 +190,7 @@ async function setBatteryInfo(session, settings, signal) {
         },
     )
 
-    const resp = await fetch(req, { signal })
+    const resp = await fetchRequest(req, options)
     if (resp.status != 200) {
         throw new Error(`Failed with status ${resp.status}: ${resp.statusText}`)
     }
