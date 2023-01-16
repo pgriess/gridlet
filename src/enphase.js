@@ -57,6 +57,9 @@ function responseCookies(resp, prevCookies) {
 }
 
 // Execute a `fetch()` request with some options
+//
+// TODO: Move this into a helper library
+// TODO: Add HTTP status code enforcement
 async function fetchRequest(req, options) {
     const defaultOptions = {
         signal: null,
@@ -201,4 +204,4 @@ async function setBatteryInfo(session, settings, options) {
     }
 }
 
-export { getBatteryInfo, setBatteryInfo, createSession }
+export { fetchRequest, getBatteryInfo, setBatteryInfo, createSession }

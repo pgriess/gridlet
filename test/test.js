@@ -17,6 +17,7 @@
 import { strict as assert } from "node:assert"
 import { DateTime } from "luxon"
 import { nextState, State } from "../src/state.js"
+import { parseWeatherCode, WeatherCode } from "../src/tomorrow.js"
 
 describe("state", () => {
     describe("#nextState", () => {
@@ -54,6 +55,21 @@ describe("state", () => {
             assert.equal(
                 nextState(DateTime.fromISO("2022-01-01T20:05:00")),
                 State.CHARGE_BATTERY_FROM_GRID)
+        })
+    })
+})
+
+describe("tomorrow", () => {
+    describe("#parseWeatherCode", () => {
+        it("should recognize existing codes", () => {
+            assert.equal(
+                parseWeatherCode(WeatherCode.LIGHT_FOG.value),
+                WeatherCode.LIGHT_FOG)
+        })
+        it("should reject unknown codes", () => {
+            assert.throws(
+                () => { parseWeatherCode(99123123) },
+                /^Error: Unexpected weather code value 99123123$/)
         })
     })
 })

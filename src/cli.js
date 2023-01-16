@@ -24,6 +24,7 @@ import log from "loglevel" // CommonJS, not ES6 module
 import { DateTime } from "luxon"
 import { createSession, getBatteryInfo, setBatteryInfo } from "./enphase.js"
 import { nextState, State, stateFromBatteryInfo } from "./state.js"
+import { getForecast } from "./tomorrow.js";
 
 const ap = ArgumentParser({
     description: "The command line interface to Gridlet.",
@@ -82,6 +83,28 @@ ap.add_argument(
     },
 )
 
+// Tomorrow.io options
+ap.add_argument(
+    "--tomorrow_api_key",
+    {
+        dest: "tomorrow_api_key",
+        metavar: "<api_key>",
+        type: "str",
+        default: env.GRIDLET_TOMORROW_API_KEY,
+        help: "Tomorrow.io API key",
+    }
+)
+ap.add_argument(
+    "--tomorrow_location",
+    {
+        dest: "tomorrow_location",
+        metavar: "<lat,lng>",
+        type: "str",
+        default: env.GRIDLET_TOMORROW_LOCATION,
+        help: "location for the Tomorrow API, e.g. '29.935,-90.109'",
+    }
+)
+
 const args = ap.parse_args();
 
 // Configure logging
@@ -99,6 +122,14 @@ if (!session) {
 
 const bi = await getBatteryInfo(session)
 log.debug(`battery_info=${inspect(bi)}`)
+
+const forecast = await getForecast(
+    args.tomorrow_api_key,
+    args.tomorrow_location.split(",").map(v => parseFloat(v)),
+    ["temperature", "weatherCode", "windGust"],
+    { timesteps: "1h", startTime: "now", endTime: "nowPlus12h", "units": "metric" },
+)
+log.debug(`forecast=${inspect(forecast.data.timelines[0].intervals.map(i => i.values))}`)
 
 const cs = stateFromBatteryInfo(bi)
 const ns = nextState(DateTime.now())
