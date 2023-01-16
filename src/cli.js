@@ -26,7 +26,11 @@ import { createSession, getBatteryInfo, setBatteryInfo } from "./enphase.js"
 import { nextState, State, stateFromBatteryInfo } from "./state.js"
 
 const ap = ArgumentParser({
-    "description": "The command line interface to Gridlet."
+    description: "The command line interface to Gridlet.",
+    epilog: `
+To facilitate ease of debugging (e.g. using an IDE), all options are
+configurable using environment variables. See the source code for definitions of
+what these are and the format that their values should be in.`,
 });
 ap.add_argument(
     "-n",
