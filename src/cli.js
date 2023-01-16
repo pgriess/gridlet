@@ -17,7 +17,7 @@
 // CLI driver for the Gridlet system
 "use strict";
 
-import { exit } from "node:process"
+import { env, exit } from "node:process"
 import { inspect } from "node:util"
 import { ArgumentParser } from "argparse"
 import log from "loglevel" // CommonJS, not ES6 module
@@ -32,7 +32,7 @@ ap.add_argument(
     "-n",
     {
         dest: "dry_run",
-        default: false,
+        default: JSON.parse(env.GRIDLET_DRY_RUN ?? "false"),
         action: "store_true",
         help: "dry-run only; do not take any action",
     }
@@ -42,7 +42,7 @@ ap.add_argument(
     {
         dest: "quiet",
         action: "store_true",
-        default: false,
+        default: JSON.parse(env.GRIDLET_QUIET ?? "false"),
         help: "silence all logging regardless of verbosity"
     }
 )
@@ -51,7 +51,7 @@ ap.add_argument(
     {
         dest: "verbosity",
         action: "count",
-        default: 0,
+        default: JSON.parse(env.GRIDLET_LOG_LEVEL ?? "0"),
         help: "increase logging verbosity; can be used multiple times"
     }
 )
@@ -63,6 +63,7 @@ ap.add_argument(
         dest: "enphase_password",
         metavar: "<password>",
         type: "str",
+        default: env.GRIDLET_ENPHASE_PASSWORD,
         help: "Enphase password"
     },
 )
@@ -72,6 +73,7 @@ ap.add_argument(
         dest: "enphase_user",
         metavar: "<user>",
         type: "str",
+        default: env.GRIDLET_ENPHASE_USER,
         help: "Enphase user name"
     },
 )
