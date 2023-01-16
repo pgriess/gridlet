@@ -38,15 +38,6 @@ ap.add_argument(
     }
 )
 ap.add_argument(
-    "-p",
-    {
-        dest: "password",
-        metavar: "<password>",
-        type: "str",
-        help: "password for Enphase service"
-    },
-)
-ap.add_argument(
     "-q",
     {
         dest: "quiet",
@@ -54,15 +45,6 @@ ap.add_argument(
         default: false,
         help: "silence all logging regardless of verbosity"
     }
-)
-ap.add_argument(
-    "-u",
-    {
-        dest: "username",
-        metavar: "<username>",
-        type: "str",
-        help: "username for Enphase service"
-    },
 )
 ap.add_argument(
     "-v",
@@ -74,6 +56,26 @@ ap.add_argument(
     }
 )
 
+// Enphase options
+ap.add_argument(
+    "--enphase_password",
+    {
+        dest: "enphase_password",
+        metavar: "<password>",
+        type: "str",
+        help: "Enphase password"
+    },
+)
+ap.add_argument(
+    "--enphase_user",
+    {
+        dest: "enphase_user",
+        metavar: "<user>",
+        type: "str",
+        help: "Enphase user name"
+    },
+)
+
 const args = ap.parse_args();
 
 // Configure logging
@@ -83,7 +85,7 @@ log.setDefaultLevel(
         Math.max(log.levels.TRACE, log.levels.ERROR - args.verbosity)
 )
 
-const session = await createSession(args.username, args.password)
+const session = await createSession(args.enphase_user, args.enphase_password)
 if (!session) {
     log.error("Failed to log in!")
     exit(1)
