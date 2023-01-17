@@ -170,6 +170,10 @@ async function getBatteryInfo(session, options) {
     )
 
     const resp = await fetchRequest(req, options)
+    if (resp.status !== 200) {
+        throw new Error(`Failed with status ${resp.status}: ${resp.statusText}`)
+    }
+
     return JSON.parse(await resp.text())
 }
 
@@ -194,7 +198,7 @@ async function setBatteryInfo(session, settings, options) {
     )
 
     const resp = await fetchRequest(req, options)
-    if (resp.status != 200) {
+    if (resp.status !== 200) {
         throw new Error(`Failed with status ${resp.status}: ${resp.statusText}`)
     }
 
