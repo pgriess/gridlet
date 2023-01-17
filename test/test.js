@@ -14,10 +14,41 @@
 
 "use strict";
 
-import { strict as assert } from "node:assert"
+import { strict as assert, deepEqual as weakDeepEqual } from "node:assert"
 import { DateTime } from "luxon"
 import { nextState, State } from "../src/state.js"
 import { parseWeatherCode, WeatherCode } from "../src/tomorrow.js"
+import { configMerge } from "../src/engine.js";
+
+describe("engine", () => {
+    describe("#configMerge", () => {
+        it("should handle no configs", () => {
+            weakDeepEqual(
+                configMerge(),
+                {})
+        })
+        it("should handle one config", () => {
+            weakDeepEqual(
+                configMerge({ a: 1 }),
+                { a: 1 })
+        })
+        it("should propagate overwrite with set values", () => {
+            weakDeepEqual(
+                configMerge({ a: 1, b: 2 }, { a: 99 }),
+                { a: 99, b: 2 })
+        })
+        it("should not overwrite with undefined values", () => {
+            weakDeepEqual(
+                configMerge({ a: 1, b: 2 }, { a: 99, b: undefined }),
+                { a: 99, b: 2 })
+        })
+        it("should set unset values", () => {
+            weakDeepEqual(
+                configMerge({ a: 1, b: 2 }, { c: 99 }),
+                { a: 1, b: 2, c: 99 })
+        })
+    })
+})
 
 describe("state", () => {
     describe("#nextState", () => {

@@ -19,7 +19,7 @@
             "type": "node",
             "request": "launch",
             "name": "Gridlet",
-            "program": "${workspaceFolder}/src/cli.js",
+            "program": "${workspaceFolder}/src/driver/cli.js",
             "envFile": "${workspaceFolder}/.envrc.local",
             "runtimeVersion": "16.16.0",
             "skipFiles": [
