@@ -15,10 +15,29 @@
 "use strict";
 
 import { strict as assert, deepEqual as weakDeepEqual } from "node:assert"
+import { URL } from "node:url"
+import { Response } from "cross-fetch"
 import { DateTime } from "luxon"
 import { nextState, State } from "../src/state.js"
 import { parseWeatherCode, WeatherCode } from "../src/tomorrow.js"
-import { configMerge } from "../src/engine.js";
+import { configMerge } from "../src/engine.js"
+import * as td from "testdouble"
+
+// A testdouble matcher for Fetch API Request objects
+const RequestMatcher = td.matchers.create({
+    "matches": (matcherArgs, actual) => {
+        const [matcherArgsQueryParams] = matcherArgs
+        const actualSearchParams = new URL(actual.url).searchParams
+
+        for (const [pn, pv] of Object.entries(matcherArgsQueryParams || {})) {
+            if (actualSearchParams.get(pn) !== pv) {
+                return false
+            }
+        }
+
+        return true
+    }
+})
 
 describe("engine", () => {
     describe("#configMerge", () => {
@@ -91,6 +110,60 @@ describe("state", () => {
 })
 
 describe("tomorrow", () => {
+    describe("#getForecast", () => {
+        let enphaseModule = null
+        let tomorrowModule = null
+
+        beforeEach(async () => {
+            enphaseModule = await td.replaceEsm("../src/enphase.js")
+            tomorrowModule = await import("../src/tomorrow.js")
+        })
+
+        afterEach(() => {
+            tomorrowModule = null
+            enphaseModule = null
+            td.reset()
+        })
+
+        it("should merge query params from arguments", async () => {
+            const resp = td.object(new Response())
+            td.replace(resp, "status", 200)
+            td.replace(resp, "statusText", "This is a test")
+            td.replace(resp, "text", () => '{"a": 13}')
+
+            // TODO: When tests fail we get weird errors related to the matcher not matching
+            //       and tripping over default behavior (return undefined)
+            td.when(enphaseModule.fetchRequest(
+                RequestMatcher({
+                    apikey: "INVALID_API_KEY",
+                    location: "123,456",
+                    fields: "foo,bar",
+                    extraParam1: "fark",
+                }),
+                td.matchers.anything()))
+                .thenResolve(resp)
+            const result = await tomorrowModule.getForecast(
+                "INVALID_API_KEY",
+                [123, 456],
+                ["foo", "bar"],
+                { extraParam1: "fark" }
+            )
+            weakDeepEqual(result, { "a": 13 })
+        })
+
+        it("should handle non-2xx status codes", async () => {
+            const resp = td.object(new Response())
+            td.replace(resp, "status", 500)
+            td.replace(resp, "statusText", "This is a test")
+
+            td.when(enphaseModule.fetchRequest(td.matchers.anything(), td.matchers.anything()))
+                .thenResolve(resp)
+            await assert.rejects(
+                tomorrowModule.getForecast("AN_INVALID_API_KEY", [123, 456]),
+                /^Error: Forecast request failed: statusCode=500;.*$/)
+        })
+    })
+
     describe("#parseWeatherCode", () => {
         it("should recognize existing codes", () => {
             assert.equal(

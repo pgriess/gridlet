@@ -9,6 +9,10 @@
             "request": "launch",
             "name": "Mocha tests",
             "program": "${workspaceFolder}/node_modules/.bin/mocha",
+            "args": [
+                "-n",
+                "loader=testdouble"
+            ],
             "envFile": "${workspaceFolder}/.envrc.local",
             "runtimeVersion": "16.16.0",
             "skipFiles": [
