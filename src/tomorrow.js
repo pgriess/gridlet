@@ -16,7 +16,7 @@
 "use strict";
 
 import { Request } from "cross-fetch"
-import URLSearchParams from "@ungap/url-search-params"
+import { URLSearchParams } from "node:url"
 
 import { fetchRequest } from "./enphase.js"
 
