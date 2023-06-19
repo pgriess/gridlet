@@ -17,7 +17,7 @@
         "gridlet": "src/cli.js"
     },
     "scripts": {
-        "test": "npx mocha -n loader=testdouble"
+        "test": "npx mocha --exit -n loader=testdouble"
     },
     "dependencies": {
         "@xmldom/xmldom": "^0.8.2",
