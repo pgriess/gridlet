@@ -7,7 +7,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Mocha tests",
+            "name": "Gridlet tests",
             "program": "${workspaceFolder}/node_modules/.bin/mocha",
             "args": [
                 "--exit",
@@ -23,8 +23,12 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Gridlet",
+            "name": "Gridlet CLI (dry-run)",
             "program": "${workspaceFolder}/src/driver/cli.js",
+            "args": [
+                "-vvv",
+                "-n",
+            ],
             "envFile": "${workspaceFolder}/.envrc.local",
             "runtimeVersion": "16.16.0",
             "skipFiles": [
