@@ -10,6 +10,7 @@
             "name": "Mocha tests",
             "program": "${workspaceFolder}/node_modules/.bin/mocha",
             "args": [
+                "--exit",
                 "-n",
                 "loader=testdouble"
             ],

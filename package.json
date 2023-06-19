@@ -14,7 +14,7 @@
     },
     "type": "module",
     "bin": {
-        "gridlet": "src/cli.js"
+        "gridlet": "src/driver/cli.js"
     },
     "scripts": {
         "test": "npx mocha --exit -n loader=testdouble"
