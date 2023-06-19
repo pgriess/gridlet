@@ -23,7 +23,6 @@ import log from "loglevel" // CommonJS, not ES6 module
 import { DOMParser } from "@xmldom/xmldom"
 import formUrlEncoded from "form-urlencoded"
 
-const BASE_URL = "https://enlighten.enphaseenergy.com"
 const LOGIN_SUCCESS_LOC_RE = /^https:\/\/enlighten.enphaseenergy.com\/web\/(?<siteId>[0-9]+)\?v=.*$/
 
 // Turn an HTMLCollection into an ES6 iterator
@@ -91,8 +90,8 @@ async function fetchRequest(req, options) {
 }
 
 // Create an authenticated session to the Enphase Enlighten system
-async function createSession(username, password, options) {
-    const bootstrapResp = await fetchRequest(`${BASE_URL}/`, options)
+async function createSession(config, fetchOptions) {
+    const bootstrapResp = await fetchRequest(`${config.enphase_url_base}/`, fetchOptions)
     const cookies = responseCookies(bootstrapResp)
 
     // Collect form elements
@@ -104,8 +103,8 @@ async function createSession(username, password, options) {
     // selectors, so we walk the DOM by hand. We could use jsdom, but it's
     // really heavy. Just live with it.
     const formInputs = new Map([
-        ["user[email]", username],
-        ["user[password]", password],
+        ["user[email]", config.enphase_user],
+        ["user[password]", config.enphase_password],
     ])
     const doc = (new DOMParser()).parseFromString(await bootstrapResp.text(), "text/html")
     for (const form of htmlCollectionIter(doc.getElementsByTagName("form"))) {
@@ -124,7 +123,7 @@ async function createSession(username, password, options) {
     }
 
     const loginReq = new Request(
-        `${BASE_URL}/login/login`,
+        `${config.enphase_url_base}/login/login`,
         {
             method: "POST",
             headers: {
@@ -139,7 +138,7 @@ async function createSession(username, password, options) {
         },
     )
 
-    const loginResp = await fetchRequest(loginReq, options)
+    const loginResp = await fetchRequest(loginReq, fetchOptions)
     if (loginResp.status !== 302) {
         return null;
     }
@@ -156,9 +155,9 @@ async function createSession(username, password, options) {
 }
 
 // Return battery information
-async function getBatteryInfo(session, options) {
+async function getBatteryInfo(config, session, fetchOptions) {
     const req = new Request(
-        `${BASE_URL}/pv/settings/${session.siteId}/battery_config?source=my_enlighten`,
+        `${config.enphase_url_base}/pv/settings/${session.siteId}/battery_config?source=my_enlighten`,
         {
             headers: {
                 Cookie: Array
@@ -169,7 +168,7 @@ async function getBatteryInfo(session, options) {
         },
     )
 
-    const resp = await fetchRequest(req, options)
+    const resp = await fetchRequest(req, fetchOptions)
     if (resp.status !== 200) {
         throw new Error(`Failed with status ${resp.status}: ${resp.statusText}`)
     }
@@ -180,9 +179,9 @@ async function getBatteryInfo(session, options) {
 // Set battery information
 //
 // TODO: Option to block until the operation has been applied?
-async function setBatteryInfo(session, settings, options) {
+async function setBatteryInfo(config, session, settings, fetchOptions) {
     const req = new Request(
-        `${BASE_URL}/pv/settings/${session.siteId}/battery_config?source=my_enlighten`,
+        `${config.enphase_url_base}/pv/settings/${session.siteId}/battery_config?source=my_enlighten`,
         {
             method: "PUT",
             headers: {
@@ -197,7 +196,7 @@ async function setBatteryInfo(session, settings, options) {
         },
     )
 
-    const resp = await fetchRequest(req, options)
+    const resp = await fetchRequest(req, fetchOptions)
     if (resp.status !== 200) {
         throw new Error(`Failed with status ${resp.status}: ${resp.statusText}`)
     }

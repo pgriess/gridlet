@@ -23,6 +23,16 @@ import { createSession, getBatteryInfo, setBatteryInfo } from "./enphase.js"
 import { nextState, State, stateFromBatteryInfo } from "./state.js"
 import { getForecast } from "./tomorrow.js";
 
+// Default configuration values
+function configDefault() {
+    return {
+        dry_run: false,
+        log_level: 0,
+        log_quiet: false,
+        enphase_url_base: "https://enlighten.enphaseenergy.com",
+    }
+}
+
 // Load config from the environment
 function configFromEnvironment() {
     const gridletEnv = {}
@@ -43,6 +53,10 @@ function configFromEnvironment() {
     // Enphase
     if (Object.hasOwn(env, "GRIDLET_ENPHASE_PASSWORD")) {
         gridletEnv.enphase_password = env.GRIDLET_ENPHASE_PASSWORD
+    }
+
+    if (Object.hasOwn(env, "GRIDLET_ENPHASE_URL_BASE")) {
+        gridletEnv.enphase_url_base = env.GRIDLET_ENPHASE_URL_BASE
     }
 
     if (Object.hasOwn(env, "GRIDLET_ENPHASE_USER")) {
@@ -91,12 +105,12 @@ async function main(config) {
             Math.max(log.levels.TRACE, log.levels.ERROR - config.log_level)
     )
 
-    const session = await createSession(config.enphase_user, config.enphase_password)
+    const session = await createSession(config)
     if (!session) {
         throw new Error("Failed to log in!")
     }
 
-    const bi = await getBatteryInfo(session)
+    const bi = await getBatteryInfo(config, session)
     log.debug(`battery_info=${inspect(bi)}`)
 
     const forecast = await getForecast(
@@ -130,8 +144,8 @@ async function main(config) {
         }
 
         log.info(`Setting battery info to ${inspect(nbi)}`)
-        await setBatteryInfo(session, nbi)
+        await setBatteryInfo(config, session, nbi)
     }
 }
 
-export { configFromEnvironment, configMerge, main }
+export { configDefault, configFromEnvironment, configMerge, main }

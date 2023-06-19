@@ -18,7 +18,7 @@
 "use strict";
 
 import { ArgumentParser } from "argparse"
-import { configFromEnvironment, configMerge, main } from "../engine.js";
+import { configDefault, configFromEnvironment, configMerge, main } from "../engine.js";
 
 // Load config from CLI arguments
 function configFromCLI() {
@@ -99,4 +99,4 @@ what these are and the format that their values should be in.`,
     return ap.parse_args()
 }
 
-main(configMerge(configFromEnvironment(), configFromCLI()))
+main(configMerge(configDefault(), configFromEnvironment(), configFromCLI()))
