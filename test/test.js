@@ -17,7 +17,7 @@
 import { strict as assert, deepEqual as weakDeepEqual } from "node:assert"
 import { execSync } from "node:child_process"
 import { URL } from "node:url"
-import { Response } from "cross-fetch"
+import { fetch, Request, Response } from "cross-fetch"
 import { DateTime } from "luxon"
 import { nextState, State } from "../src/state.js"
 import { parseWeatherCode, WeatherCode } from "../src/tomorrow.js"
@@ -204,5 +204,57 @@ describe("tomorrow", () => {
                 () => { parseWeatherCode(99123123) },
                 /^Error: Unexpected weather code value 99123123$/)
         })
+    })
+})
+
+describe("lambda", () => {
+    // Use `function()` here so that we get access to `this.timeout()`,
+    // which we need because the default 2s timeout is too short for all of
+    // this heavyweight Docker setup
+    before(function () {
+        this.timeout(60000)
+
+        // Create a network for these containers to share so that the Docker DNS
+        // resolver will allow the Lambda container to resolve the hostname of
+        // the fake Enphase server
+        execSync("docker network inspect gridlet_test_network && docker network rm gridlet_test_network || true", { stdio: [null, null, null] })
+        execSync("docker network create gridlet_test_network")
+
+        // Container with a fake Enphase server
+        execSync("docker image build --tag=gridlet_fake_enphase_server:latest -f test/fake/enphase_server.Dockerfile .", { stdio: [null, null, null] })
+        execSync("docker container rm -f gridlet_fake_enphase_server", { stdio: [null, null, null] })
+        execSync("docker container create --network=gridlet_test_network --name=gridlet_fake_enphase_server -p 20233:8001 gridlet_fake_enphase_server:latest")
+        execSync("docker container start gridlet_fake_enphase_server")
+
+        // Container with a fake Lambda server
+        execSync("docker image build --tag=gridlet_lambda:latest -f docker/lambda/Dockerfile .", { stdio: [null, null, null] })
+        execSync("docker container rm -f gridlet_lambda", { stdio: [null, null, null] })
+        execSync("docker container create --network=gridlet_test_network --name=gridlet_lambda -p 20234:8080 -e GRIDLET_ENPHASE_URL_BASE=http://gridlet_fake_enphase_server:8001 -e GRIDLET_DRY_RUN=true gridlet_lambda:latest")
+        execSync("docker container start gridlet_lambda")
+
+        // HACK: Force wait for the containers to come up. Surely there is a
+        //       better way! Maybe http://testcontainers.com?
+        execSync("sleep 1")
+    })
+
+    after(() => {
+        execSync("docker container rm -f gridlet_fake_enphase_server", { stdio: [null, null, null] })
+        execSync("docker container rm -f gridlet_lambda", { stdio: [null, null, null] })
+        execSync("docker network rm gridlet_test_network")
+    })
+
+    it("should be able to run at all", async () => {
+        const req = new Request(
+            "http://localhost:20234/2015-03-31/functions/function/invocations",
+            {
+                method: "POST",
+                body: JSON.stringify({}),
+            }
+        )
+        const resp = await fetch(req)
+        assert.equal(200, resp.status)
+
+        const respBody = await resp.json()
+        assert.equal("Ok", respBody)
     })
 })
