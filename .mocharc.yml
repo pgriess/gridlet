@@ -1,0 +1,8 @@
+# Force Mocha to ignore fakes.
+#
+# Without this, it will evaluate the files at load time causing ports to be
+# bound, etc. This can conflict with other things running on the system,
+# resulting in a flakey test. We don't need (or want) Mocha to evaluate this
+# anyway since it's not part of the test code that it should be looking at.
+ignore:
+  - test/fake/

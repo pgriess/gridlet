@@ -15,12 +15,13 @@
 "use strict";
 
 import { strict as assert, deepEqual as weakDeepEqual } from "node:assert"
+import { execSync } from "node:child_process"
 import { URL } from "node:url"
 import { Response } from "cross-fetch"
 import { DateTime } from "luxon"
 import { nextState, State } from "../src/state.js"
 import { parseWeatherCode, WeatherCode } from "../src/tomorrow.js"
-import { configMerge } from "../src/engine.js"
+import { configDefault, configMerge, main } from "../src/engine.js"
 import * as td from "testdouble"
 
 // A testdouble matcher for Fetch API Request objects
@@ -65,6 +66,34 @@ describe("engine", () => {
             weakDeepEqual(
                 configMerge({ a: 1, b: 2 }, { c: 99 }),
                 { a: 1, b: 2, c: 99 })
+        })
+    })
+
+    describe("#main", () => {
+        // Use `function()` here so that we get access to `this.timeout()`,
+        // which we need because the default 2s timeout is too short for all of
+        // this heavyweight Docker setup
+        before(function () {
+            this.timeout(60000)
+
+            // Container with a fake Enphase server
+            execSync("docker image build --tag=gridlet_fake_enphase_server:latest -f test/fake/enphase_server.Dockerfile .", { stdio: [null, null, null] })
+            execSync("docker container rm -f gridlet_fake_enphase_server", { stdio: [null, null, null] })
+            execSync("docker container create --name=gridlet_fake_enphase_server -p 20233:8001 gridlet_fake_enphase_server:latest")
+            execSync("docker container start gridlet_fake_enphase_server")
+
+            // HACK: Force wait for the containers to come up. Surely there is a
+            //       better way! Maybe http://testcontainers.com?
+            execSync("sleep 1")
+        })
+
+        after(() => {
+            execSync("docker container rm -f gridlet_fake_enphase_server", { stdio: [null, null, null] })
+        })
+
+        it("should be able to run at all", async () => {
+            const config = configMerge(configDefault(), { enphase_url_base: "http://localhost:20233", dry_run: true })
+            await main(config)
         })
     })
 })

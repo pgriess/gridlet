@@ -23,7 +23,7 @@ import log from "loglevel" // CommonJS, not ES6 module
 import { DOMParser } from "@xmldom/xmldom"
 import formUrlEncoded from "form-urlencoded"
 
-const LOGIN_SUCCESS_LOC_RE = /^https:\/\/enlighten.enphaseenergy.com\/web\/(?<siteId>[0-9]+)\?v=.*$/
+const LOGIN_SUCCESS_LOC_RE = /\/web\/(?<siteId>[0-9]+)\?v=.*$/
 
 // Turn an HTMLCollection into an ES6 iterator
 function* htmlCollectionIter(hc) {
@@ -81,7 +81,8 @@ async function fetchRequest(req, options) {
     }
 
     try {
-        return await fetch(req, fetchOptions)
+        const resp = await fetch(req, fetchOptions)
+        return resp
     } finally {
         if (abortTimeoutID) {
             clearTimeout(abortTimeoutID)
@@ -106,7 +107,8 @@ async function createSession(config, fetchOptions) {
         ["user[email]", config.enphase_user],
         ["user[password]", config.enphase_password],
     ])
-    const doc = (new DOMParser()).parseFromString(await bootstrapResp.text(), "text/html")
+    const bodyText = await bootstrapResp.text()
+    const doc = (new DOMParser()).parseFromString(bodyText, "text/html")
     for (const form of htmlCollectionIter(doc.getElementsByTagName("form"))) {
         if (form.getAttribute("action") !== "/login/login") {
             continue
