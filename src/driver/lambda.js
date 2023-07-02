@@ -18,9 +18,9 @@
 //       provides this for us.
 "use strict";
 
-import { configFromEnvironment, main } from "../engine.js"
+import { configDefault, configFromEnvironment, configMerge, main } from "../engine.js"
 
 export const handler = async (event, context) => {
-    await main(configFromEnvironment())
+    await main(configMerge(configDefault(), configFromEnvironment()))
     return "Ok"
 }
