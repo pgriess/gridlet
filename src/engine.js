@@ -112,18 +112,19 @@ async function main(config) {
 
     const bi = await getBatteryInfo(config, session)
     log.debug(`battery_info=${inspect(bi)}`)
-
-    const forecast = await getForecast(
-        config.tomorrow_api_key,
-        config.tomorrow_location.split(",").map(v => parseFloat(v)),
-        ["temperature", "weatherCode", "windGust"],
-        { timesteps: "1h", startTime: "now", endTime: "nowPlus12h", "units": "metric" },
-    )
-    log.debug(`forecast=${inspect(forecast.data.timelines[0].intervals.map(i => i.values))}`)
-
     const cs = stateFromBatteryInfo(bi)
-    const ns = nextState(DateTime.now())
 
+    if (config.tomorrow_api_key && config.tomorrow_location) {
+        const forecast = await getForecast(
+            config.tomorrow_api_key,
+            config.tomorrow_location.split(",").map(v => parseFloat(v)),
+            ["temperature", "weatherCode", "windGust"],
+            { timesteps: "1h", startTime: "now", endTime: "nowPlus12h", "units": "metric" },
+        )
+        log.debug(`forecast=${inspect(forecast.data.timelines[0].intervals.map(i => i.values))}`)
+    }
+
+    const ns = nextState(DateTime.now())
     log.info(`Transitioning state from ${cs.toString()} to ${ns.toString()}`)
 
     if (ns === cs) {
