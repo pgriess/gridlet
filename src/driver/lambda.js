@@ -18,9 +18,17 @@
 //       provides this for us.
 "use strict";
 
+import { inspect } from "node:util"
 import { configDefault, configFromEnvironment, configMerge, main } from "../engine.js"
 
+// The AWS Lambda event is the JSON object from POST request body. No processing
+// required, just pass it directly.
+function configFromEvent(event) {
+    console.log(`event=${inspect(event, { depth: 4, breakLength: Infinity, compact: true })}`)
+    return event
+}
+
 export const handler = async (event, context) => {
-    await main(configMerge(configDefault(), configFromEnvironment()))
+    await main(configMerge(configDefault(), configFromEnvironment(), configFromEvent(event)))
     return "Ok"
 }

@@ -229,7 +229,7 @@ describe("lambda", () => {
         // Container with a fake Lambda server
         execSync("docker image build --tag=gridlet_lambda:latest -f docker/lambda/Dockerfile .", { stdio: [null, null, null] })
         execSync("docker container rm -f gridlet_lambda", { stdio: [null, null, null] })
-        execSync("docker container create --network=gridlet_test_network --name=gridlet_lambda -p 20234:8080 -e GRIDLET_ENPHASE_URL_BASE=http://gridlet_fake_enphase_server:8001 -e GRIDLET_DRY_RUN=true gridlet_lambda:latest")
+        execSync("docker container create --network=gridlet_test_network --name=gridlet_lambda -p 20234:8080 -e GRIDLET_DRY_RUN=true gridlet_lambda:latest")
         execSync("docker container start gridlet_lambda")
 
         // HACK: Force wait for the containers to come up. Surely there is a
@@ -248,7 +248,9 @@ describe("lambda", () => {
             "http://localhost:20234/2015-03-31/functions/function/invocations",
             {
                 method: "POST",
-                body: JSON.stringify({}),
+                body: JSON.stringify({
+                    enphase_url_base: "http://gridlet_fake_enphase_server:8001",
+                }),
             }
         )
         const resp = await fetch(req)
