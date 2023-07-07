@@ -16,6 +16,7 @@
 "use strict";
 
 import { Duration } from "luxon"
+import { WeatherCode } from "./tomorrow.js";
 
 // States that we can put the system in
 //
@@ -26,7 +27,21 @@ const State = Object.freeze({
 })
 
 // Compute the next state
-function nextState(now) {
+function nextState(now, forecast) {
+    const BAD_WEATHER_CODES = [
+        WeatherCode.THUNDERSTORM,
+        WeatherCode.HEAVY_RAIN,
+        WeatherCode.HEAVY_SNOW,
+        WeatherCode.FREEZING_DRIZZLE,
+        WeatherCode.FREEZING_RAIN,
+        WeatherCode.LIGHT_FREEZING_RAIN,
+        WeatherCode.HEAVY_FREEZING_RAIN,
+        WeatherCode.ICE_PELLETS,
+        WeatherCode.LIGHT_ICE_PELLETS,
+        WeatherCode.HEAVY_ICE_PELLETS
+    ]
+
+    // Charge from the grid if it's our scheduled time to do so
     const slop = Duration.fromObject({ minutes: 10 })
     const beginSelfDT = now
         .setZone("America/Chicago")
@@ -37,11 +52,25 @@ function nextState(now) {
         .set({ "hour": 20, "minute": 0, "second": 0, "millisecond": 0 })
         .minus(slop)
 
-    if (beginSelfDT < now && now < endSelfDT) {
-        return State.SELF_POWER
+    if (now < beginSelfDT || endSelfDT < now) {
+        return State.CHARGE_BATTERY_FROM_GRID
     }
 
-    return State.CHARGE_BATTERY_FROM_GRID
+    // Charge from the grid if there is bad weather coming
+    if (forecast) {
+        for (let f of forecast) {
+            if (BAD_WEATHER_CODES.find((e) => e == f.values.weatherCode)) {
+                return State.CHARGE_BATTERY_FROM_GRID
+            }
+
+            if (f.values.windGust > 20) {
+                return State.CHARGE_BATTERY_FROM_GRID
+            }
+        }
+    }
+
+    // No special circumstances, steady as she goes
+    return State.SELF_POWER
 }
 
 // Compute the current state from battery info

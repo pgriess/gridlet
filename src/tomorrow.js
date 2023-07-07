@@ -86,7 +86,18 @@ async function getForecast(apiKey, location, fields, extraParams, fetchOptions) 
         throw new Error(`Forecast request failed: statusCode=${resp.status}; statusText=${resp.statusText}; body=${respBody}`)
     }
 
-    return JSON.parse(respBody)
+    let forecast = JSON.parse(respBody)
+
+    // Unwrap the nested datastructure and map codes into JavaScript enums
+    forecast = forecast.data.timelines[0].intervals.map((i) => {
+        if ("weatherCode" in i.values) {
+            i.values.weatherCode = parseWeatherCode(i.values.weatherCode)
+        }
+
+        return i
+    })
+
+    return forecast
 }
 
 export { getForecast, parseWeatherCode, WeatherCode }

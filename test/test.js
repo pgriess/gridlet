@@ -100,40 +100,68 @@ describe("engine", () => {
 
 describe("state", () => {
     describe("#nextState", () => {
-        it("should self-power", () => {
+        it("should self-power during the day", () => {
             assert.equal(
-                nextState(DateTime.fromISO("2022-01-01T12:00:00")),
+                nextState(DateTime.fromISO("2022-01-01T12:00:00"), null),
                 State.SELF_POWER)
         })
-        it("should charge from grid", () => {
+        it("should charge from grid at night", () => {
             assert.equal(
-                nextState(DateTime.fromISO("2022-01-01T02:00:00")),
+                nextState(DateTime.fromISO("2022-01-01T02:00:00"), null),
                 State.CHARGE_BATTERY_FROM_GRID)
             assert.equal(
-                nextState(DateTime.fromISO("2022-01-01T22:00:00")),
+                nextState(DateTime.fromISO("2022-01-01T22:00:00"), null),
                 State.CHARGE_BATTERY_FROM_GRID)
         })
         it("should handle running at the exact expected time", () => {
             assert.equal(
-                nextState(DateTime.fromISO("2022-01-01T06:00:00")),
+                nextState(DateTime.fromISO("2022-01-01T06:00:00"), null),
                 State.SELF_POWER)
             assert.equal(
-                nextState(DateTime.fromISO("2022-01-01T20:00:00")),
+                nextState(DateTime.fromISO("2022-01-01T20:00:00"), null),
                 State.CHARGE_BATTERY_FROM_GRID)
         })
         it("should handle slop", () => {
             assert.equal(
-                nextState(DateTime.fromISO("2022-01-01T05:55:00")),
+                nextState(DateTime.fromISO("2022-01-01T05:55:00"), null),
                 State.SELF_POWER)
             assert.equal(
-                nextState(DateTime.fromISO("2022-01-01T06:05:00")),
+                nextState(DateTime.fromISO("2022-01-01T06:05:00"), null),
                 State.SELF_POWER)
             assert.equal(
-                nextState(DateTime.fromISO("2022-01-01T19:55:00")),
+                nextState(DateTime.fromISO("2022-01-01T19:55:00"), null),
                 State.CHARGE_BATTERY_FROM_GRID)
             assert.equal(
-                nextState(DateTime.fromISO("2022-01-01T20:05:00")),
+                nextState(DateTime.fromISO("2022-01-01T20:05:00"), null),
                 State.CHARGE_BATTERY_FROM_GRID)
+        })
+        it("should not charge during good weather", () => {
+            assert.equal(
+                nextState(
+                    DateTime.fromISO("2022-01-01T12:00:00"),
+                    [
+                        { values: { weatherCode: WeatherCode.CLEAR_SUNNY, windGust: 0, } }
+                    ]),
+                State.SELF_POWER
+            )
+        })
+        it("should charge during bad weather", () => {
+            assert.equal(
+                nextState(
+                    DateTime.fromISO("2022-01-01T12:00:00"),
+                    [
+                        { values: { weatherCode: WeatherCode.THUNDERSTORM, windGust: 0, } }
+                    ]),
+                State.CHARGE_BATTERY_FROM_GRID
+            )
+            assert.equal(
+                nextState(
+                    DateTime.fromISO("2022-01-01T12:00:00"),
+                    [
+                        { values: { weatherCode: WeatherCode.CLEAR_SUNNY, windGust: 100, } }
+                    ]),
+                State.CHARGE_BATTERY_FROM_GRID
+            )
         })
     })
 })
@@ -158,7 +186,7 @@ describe("tomorrow", () => {
             const resp = td.object(new Response())
             td.replace(resp, "status", 200)
             td.replace(resp, "statusText", "This is a test")
-            td.replace(resp, "text", () => '{"a": 13}')
+            td.replace(resp, "text", () => JSON.stringify({ data: { timelines: [{ intervals: [] }] } }))
 
             // TODO: When tests fail we get weird errors related to the matcher not matching
             //       and tripping over default behavior (return undefined)
@@ -177,7 +205,7 @@ describe("tomorrow", () => {
                 ["foo", "bar"],
                 { extraParam1: "fark" }
             )
-            weakDeepEqual(result, { "a": 13 })
+            weakDeepEqual(result, [])
         })
 
         it("should handle non-2xx status codes", async () => {
@@ -190,6 +218,23 @@ describe("tomorrow", () => {
             await assert.rejects(
                 tomorrowModule.getForecast("AN_INVALID_API_KEY", [123, 456]),
                 /^Error: Forecast request failed: statusCode=500;.*$/)
+        })
+
+        it("should parse weather code constants into enums", async () => {
+            const resp = td.object(new Response())
+            td.replace(resp, "status", 200)
+            td.replace(resp, "statusText", "This is a test")
+            td.replace(resp, "text", () => JSON.stringify({ data: { timelines: [{ intervals: [{ values: { weatherCode: 6000 } }] }] } }))
+
+            td.when(enphaseModule.fetchRequest(td.matchers.anything(), td.matchers.anything()))
+                .thenResolve(resp)
+            const result = await tomorrowModule.getForecast(
+                "INVALID_API_KEY",
+                [123, 456],
+                ["foo", "bar"],
+                { extraParam1: "fark" }
+            )
+            weakDeepEqual(result, [{ values: { weatherCode: WeatherCode.FREEZING_DRIZZLE } }])
         })
     })
 
