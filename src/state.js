@@ -30,7 +30,6 @@ const State = Object.freeze({
 function nextState(now, forecast) {
     const BAD_WEATHER_CODES = [
         WeatherCode.THUNDERSTORM,
-        WeatherCode.HEAVY_RAIN,
         WeatherCode.HEAVY_SNOW,
         WeatherCode.FREEZING_DRIZZLE,
         WeatherCode.FREEZING_RAIN,
