@@ -66,6 +66,7 @@ async function getForecast(apiKey, location, fields, extraParams, fetchOptions) 
     usp.append("apikey", apiKey)
     usp.append("location", location.join(","))
     usp.append("fields", (fields || []).join(","))
+    usp.append("units", "metric")
     for (const [pn, pv] of Object.entries(extraParams || {})) {
         usp.append(pn, pv)
     }

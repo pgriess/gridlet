@@ -63,6 +63,7 @@ function nextState(now, forecast) {
                 return State.CHARGE_BATTERY_FROM_GRID
             }
 
+            // Units are meters/sec
             if (f.values.windGust > 20) {
                 return State.CHARGE_BATTERY_FROM_GRID
             }
