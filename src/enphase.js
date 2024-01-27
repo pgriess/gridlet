@@ -15,6 +15,7 @@
 // Interact with Enphase devices.
 "use strict";
 
+import { createHash } from "node:crypto";
 import { inspect } from "node:util"
 import { AbortController } from "abort-controller"
 import { parse as parseCookie, splitCookiesString } from "set-cookie-parser"
@@ -30,6 +31,13 @@ function* htmlCollectionIter(hc) {
     for (let i = 0; i < hc.length; ++i) {
         yield hc.item(i)
     }
+}
+
+// Hash the password for submittal on the Enphase login form
+//
+// TODO: Use something more browser-standard, maybe Web Crypto?
+function hashPassword(pass) {
+    return createHash("md5").update(pass).digest("hex")
 }
 
 // Parse cookies from a Response and return them in a Map.
@@ -105,7 +113,7 @@ async function createSession(config, fetchOptions) {
     // really heavy. Just live with it.
     const formInputs = new Map([
         ["user[email]", config.enphase_user],
-        ["user[password]", config.enphase_password],
+        ["user[password]", hashPassword(config.enphase_password || "")],
     ])
     const bodyText = await bootstrapResp.text()
     const doc = (new DOMParser()).parseFromString(bodyText, "text/html")
